@@ -2,10 +2,13 @@ type Props = {
   allCount: number;
   completeCount: number;
   incompleteCount: number;
-}
+};
 
-export const StatusArea = (props: Props) => {
-  const { allCount, completeCount, incompleteCount } = props;
+export const StatusArea = ({
+  allCount,
+  completeCount,
+  incompleteCount,
+}: Props) => {
   return (
     <div className="status-area">
       <p>全てのタスク：{allCount}</p>

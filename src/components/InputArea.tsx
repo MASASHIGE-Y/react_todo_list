@@ -4,16 +4,11 @@ type Props = {
   onClick: () => void;
 };
 
-export const InputArea = (props: Props) => {
-  const { todoText, onChange, onClick } = props;
+export const InputArea = ({ todoText, onChange, onClick }: Props) => {
   return (
-      <div className="input-area">
-        <input 
-          placeholder="TODOを入力" 
-          value={todoText} 
-          onChange={onChange} 
-        />
-        <button onClick={onClick}>保存</button>
-      </div>
+    <div className="input-area">
+      <input placeholder="TODOを入力" value={todoText} onChange={onChange} />
+      <button onClick={onClick}>保存</button>
+    </div>
   );
 };
