@@ -1,121 +1,173 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useRef, useState } from "react";
+import "./App.css";
+import { TodoInputForm } from "./components/TodoInputForm";
+import { TodoStatus } from "./components/TodoStatus";
+import { IncompleteTodo } from "./components/IncompleteTodo";
+import { CompleteTodo } from "./components/CompleteTodo";
 
-function App() {
-  const [count, setCount] = useState(0)
+type Todo = {
+  id: number;
+  content: string;
+  isCompleted: boolean;
+};
+
+export const App = () => {
+  /* ==========================================
+   * 1. State（状態）の定義
+   * ========================================== */
+  // 入力フォームのテキスト
+  const [todoText, setTodoText] = useState<string>("");
+  // 未完了TODOのリスト&完了TODOのリスト を 1つにまとめる
+  const [todos, setTodos] = useState<Todo[]>([]);
+  // 編集中のインデックスを管理
+  const [editId, setEditId] = useState<number | null>(null);
+  // 編集中のテキストを一時保存する
+  const [editText, setEditText] = useState<string>("");
+  // 追加：次に使うIDを保持。初期値は0
+  const nextId = useRef<number>(0);
+
+  /* ==========================================
+   * 2. 関数（ロジック）の定義
+   * ========================================== */
+  // 入力値が変わった時の発火
+  const onChangeTodoText = (event: React.ChangeEvent<HTMLInputElement>) =>
+    setTodoText(event.target.value);
+
+  // 追加ボタンを押した時
+  const onClickAdd = () => {
+    // trimした値を変数に代入
+    const trimmedText = todoText.trim();
+
+    if (trimmedText === "") return;
+
+    const newTodo: Todo = {
+      // 今のカウンターの数字をIDにする
+      id: nextId.current,
+      content: trimmedText, // trimしたものをcontentに代入
+      isCompleted: false,
+    };
+
+    setTodos([...todos, newTodo]);
+    nextId.current += 1; // 使い終わったら、カウンターを1増やす
+    setTodoText("");
+  };
+
+  // 削除ボタン（未完了ToDo）
+  const onClickDelete = (id: number) => {
+    const confirmed = window.confirm("本当によろしいですか？");
+
+    if (!confirmed) return; // 早期リターン。キャンセルされたらここで終了
+
+    // クリックされたid以外のものだけ残す。消したいIDと一致しないやつだけ残す
+    const newTodos = todos.filter((todo) => todo.id !== id);
+    setTodos(newTodos);
+  };
+
+  // 削除ボタン（完了ToDo）
+  const onClickDeleteComplete = (id: number) => {
+    const confirmed = window.confirm("本当によろしいですか？");
+    if (confirmed) {
+      // クリックされたid以外のものだけ残す。消したいIDと一致しないやつだけ残す
+      const newTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(newTodos);
+    }
+  };
+
+  // 完了と戻す ボタン
+  const toggleTodoStatus = (id: number) => {
+    const newTodos = todos.map((todo) => {
+      if (todo.id === id) {
+        // true falseを反転
+        return { ...todo, isCompleted: !todo.isCompleted };
+      }
+      return todo;
+    });
+
+    setTodos(newTodos);
+  };
+
+  // 編集ボタン
+  const onClickEdit = (id: number, text: string) => {
+    setEditId(id);
+    setEditText(text); // 今のTODOの文字を初期値として入れる
+  };
+
+  // 編集したものを保存するボタン
+  const onClickSave = (id: number) => {
+    const trimmedText = editText.trim(); // 編集用のstateもtrim
+    if (trimmedText === "") return;
+    const newTodos = todos.map((todo) => {
+      if (todo.id === id) {
+        return { ...todo, content: trimmedText };
+      }
+      return todo;
+    });
+    setTodos(newTodos);
+    setEditId(null);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      {/* 入力エリア */}
+      <TodoInputForm
+        todoText={todoText}
+        onChange={onChangeTodoText}
+        onClick={onClickAdd}
+      />
 
-      <div className="ticks"></div>
+      {/* 統計エリア */}
+      <TodoStatus
+        allCount={todos.length}
+        completeCount={todos.filter((t) => t.isCompleted).length}
+        incompleteCount={todos.filter((t) => !t.isCompleted).length}
+      />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+      {/* 未完了&完了リスト */}
+      <ul className="todo-list">
+        {/* 1. 未完了TODOのエリア */}
+        <div className="incomplete-area">
+          <p className="title">未完了のTODO</p>
           <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+            {todos.map(
+              (todo) =>
+                !todo.isCompleted && (
+                  <IncompleteTodo
+                    key={todo.id}
+                    todo={todo}
+                    onComplete={toggleTodoStatus}
+                    onDelete={onClickDelete}
+                    editId={editId}
+                    editText={editText}
+                    onChangeEditText={(e) => setEditText(e.target.value)}
+                    onClickEdit={onClickEdit}
+                    onClickSave={onClickSave}
+                    onCancel={() => setEditId(null)}
+                  />
+                ),
+            )}
           </ul>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
+
+        {/* 2. 完了TODOのエリア */}
+        <div className="complete-area">
+          <p className="title">完了のTODO</p>
           <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
+            {todos.map(
+              (todo) =>
+                todo.isCompleted && (
+                  <CompleteTodo
+                    key={todo.id}
+                    todo={todo}
+                    onDelete={onClickDeleteComplete}
+                    onBack={toggleTodoStatus}
+                  />
+                ),
+            )}
           </ul>
         </div>
-      </section>
+      </ul>
+    </div>
+  );
+};
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
-
-export default App
+export default App;
