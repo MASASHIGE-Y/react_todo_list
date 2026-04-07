@@ -4,7 +4,7 @@ type Props = {
   incompleteCount: number;
 };
 
-export const StatusArea = ({
+export const TodoStatus = ({
   allCount,
   completeCount,
   incompleteCount,
